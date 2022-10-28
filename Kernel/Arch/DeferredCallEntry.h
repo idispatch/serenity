@@ -8,6 +8,7 @@
 
 #include <AK/BitCast.h>
 #include <AK/Function.h>
+#include <AK/ObjectBuffer.h>
 
 namespace Kernel {
 
@@ -15,12 +16,12 @@ struct DeferredCallEntry {
     using HandlerFunction = Function<void()>;
 
     DeferredCallEntry* next;
-    alignas(HandlerFunction) u8 handler_storage[sizeof(HandlerFunction)];
+    ObjectBuffer<HandlerFunction> handler_storage;
     bool was_allocated;
 
     HandlerFunction& handler_value()
     {
-        return *bit_cast<HandlerFunction*>(&handler_storage);
+        return handler_storage.object();
     }
 
     void invoke_handler()

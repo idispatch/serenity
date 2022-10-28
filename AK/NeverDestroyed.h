@@ -7,6 +7,7 @@
 #pragma once
 
 #include <AK/Noncopyable.h>
+#include <AK/ObjectBuffer.h>
 #include <AK/Types.h>
 
 namespace AK {
@@ -20,22 +21,22 @@ public:
     template<typename... Args>
     NeverDestroyed(Args&&... args)
     {
-        new (storage) T(forward<Args>(args)...);
+        new (storage.buffer()) T(forward<Args>(args)...);
     }
 
     ~NeverDestroyed() = default;
 
     T* operator->() { return &get(); }
-    const T* operator->() const { return &get(); }
+    T const* operator->() const { return &get(); }
 
     T& operator*() { return get(); }
-    const T& operator*() const { return get(); }
+    T const& operator*() const { return get(); }
 
-    T& get() { return reinterpret_cast<T&>(storage); }
-    const T& get() const { return reinterpret_cast<T&>(storage); }
+    T& get() { return storage.object(); }
+    T const& get() const { return storage.object(); }
 
 private:
-    alignas(T) u8 storage[sizeof(T)];
+    ObjectBuffer<T> storage;
 };
 
 }

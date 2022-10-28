@@ -1313,7 +1313,7 @@ void Processor::smp_unicast(u32 cpu, Function<void()> callback, bool async)
 {
     auto& msg = smp_get_from_pool();
     msg.type = ProcessorMessage::Callback;
-    new (msg.callback_storage) ProcessorMessage::CallbackFunction(move(callback));
+    new (msg.callback_storage.buffer()) ProcessorMessage::CallbackFunction(move(callback));
     smp_unicast_message(cpu, msg, async);
 }
 
@@ -1359,7 +1359,7 @@ UNMAP_AFTER_INIT void Processor::deferred_call_pool_init()
     for (size_t i = 0; i < pool_count; i++) {
         auto& entry = m_deferred_call_pool[i];
         entry.next = i < pool_count - 1 ? &m_deferred_call_pool[i + 1] : nullptr;
-        new (entry.handler_storage) DeferredCallEntry::HandlerFunction;
+        new (entry.handler_storage.buffer()) DeferredCallEntry::HandlerFunction;
         entry.was_allocated = false;
     }
     m_pending_deferred_calls = nullptr;
@@ -1390,7 +1390,7 @@ DeferredCallEntry* Processor::deferred_call_get_free()
     }
 
     auto* entry = new DeferredCallEntry;
-    new (entry->handler_storage) DeferredCallEntry::HandlerFunction;
+    new (entry->handler_storage.buffer()) DeferredCallEntry::HandlerFunction;
     entry->was_allocated = true;
     return entry;
 }

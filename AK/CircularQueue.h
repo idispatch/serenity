@@ -8,6 +8,7 @@
 
 #include <AK/Assertions.h>
 #include <AK/Forward.h>
+#include <AK/ObjectBuffer.h>
 #include <AK/StdLibExtras.h>
 
 namespace AK {
@@ -63,11 +64,11 @@ public:
         return value;
     }
 
-    const T& at(size_t index) const { return elements()[(m_head + index) % Capacity]; }
+    T const& at(size_t index) const { return elements()[(m_head + index) % Capacity]; }
     T& at(size_t index) { return elements()[(m_head + index) % Capacity]; }
 
-    const T& first() const { return at(0); }
-    const T& last() const { return at(size() - 1); }
+    T const& first() const { return at(0); }
+    T const& last() const { return at(size() - 1); }
 
     class ConstIterator {
     public:
@@ -78,7 +79,7 @@ public:
             return *this;
         }
 
-        const T& operator*() const { return m_queue.at(m_index); }
+        T const& operator*() const { return m_queue.at(m_index); }
 
     private:
         friend class CircularQueue;
@@ -122,11 +123,11 @@ public:
     size_t head_index() const { return m_head; }
 
 protected:
-    T* elements() { return reinterpret_cast<T*>(m_storage); }
-    const T* elements() const { return reinterpret_cast<const T*>(m_storage); }
+    T* elements() { return m_storage.address(0); }
+    T const* elements() const { return m_storage.address(0); }
 
     friend class ConstIterator;
-    alignas(T) u8 m_storage[sizeof(T) * Capacity];
+    ObjectArrayBuffer<T, Capacity> m_storage;
     size_t m_size { 0 };
     size_t m_head { 0 };
 };

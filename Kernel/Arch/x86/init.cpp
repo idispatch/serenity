@@ -102,8 +102,8 @@ ALWAYS_INLINE static Processor& bsp_processor()
 {
     // This solves a problem where the bsp Processor instance
     // gets "re"-initialized in init() when we run all global constructors.
-    alignas(Processor) static u8 bsp_processor_storage[sizeof(Processor)];
-    return (Processor&)bsp_processor_storage;
+    static ObjectBuffer<Processor> bootstrap_processor_storage;
+    return bootstrap_processor_storage.object();
 }
 
 // SerenityOS Kernel C++ entry point :^)

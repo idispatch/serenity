@@ -12,6 +12,7 @@
 #include <AK/Find.h>
 #include <AK/Forward.h>
 #include <AK/Iterator.h>
+#include <AK/ObjectBuffer.h>
 #include <AK/Optional.h>
 #include <AK/ReverseIterator.h>
 #include <AK/Span.h>
@@ -174,7 +175,8 @@ public:
     }
 
     template<typename TUnaryPredicate>
-    Optional<VisibleType const&> first_matching(TUnaryPredicate const& predicate) const requires(!contains_reference)
+    Optional<VisibleType const&> first_matching(TUnaryPredicate const& predicate) const
+        requires(!contains_reference)
     {
         for (size_t i = 0; i < size(); ++i) {
             if (predicate(at(i))) {
@@ -790,12 +792,12 @@ private:
     StorageType* inline_buffer()
     {
         static_assert(inline_capacity > 0);
-        return reinterpret_cast<StorageType*>(m_inline_buffer_storage);
+        return m_inline_buffer_storage.address(0);
     }
     StorageType const* inline_buffer() const
     {
         static_assert(inline_capacity > 0);
-        return reinterpret_cast<StorageType const*>(m_inline_buffer_storage);
+        return m_inline_buffer_storage.address(0);
     }
 
     StorageType& raw_last() { return raw_at(size() - 1); }
@@ -805,23 +807,7 @@ private:
     size_t m_size { 0 };
     size_t m_capacity { 0 };
 
-    static constexpr size_t storage_size()
-    {
-        if constexpr (inline_capacity == 0)
-            return 0;
-        else
-            return sizeof(StorageType) * inline_capacity;
-    }
-
-    static constexpr size_t storage_alignment()
-    {
-        if constexpr (inline_capacity == 0)
-            return 1;
-        else
-            return alignof(StorageType);
-    }
-
-    alignas(storage_alignment()) unsigned char m_inline_buffer_storage[storage_size()];
+    ObjectArrayBuffer<StorageType, inline_capacity> m_inline_buffer_storage;
     StorageType* m_outline_buffer { nullptr };
 };
 

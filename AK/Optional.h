@@ -8,6 +8,7 @@
 #pragma once
 
 #include <AK/Assertions.h>
+#include <AK/ObjectBuffer.h>
 #include <AK/StdLibExtras.h>
 #include <AK/Types.h>
 #include <AK/kmalloc.h>
@@ -38,17 +39,22 @@ public:
     ALWAYS_INLINE Optional() = default;
 
 #ifdef AK_HAS_CONDITIONALLY_TRIVIAL
-    Optional(Optional const& other) requires(!IsCopyConstructible<T>) = delete;
+    Optional(Optional const& other) requires(!IsCopyConstructible<T>)
+        = delete;
     Optional(Optional const& other) = default;
 
-    Optional(Optional&& other) requires(!IsMoveConstructible<T>) = delete;
+    Optional(Optional&& other) requires(!IsMoveConstructible<T>)
+        = delete;
 
-    Optional& operator=(Optional const&) requires(!IsCopyConstructible<T> || !IsDestructible<T>) = delete;
+    Optional& operator=(Optional const&) requires(!IsCopyConstructible<T> || !IsDestructible<T>)
+        = delete;
     Optional& operator=(Optional const&) = default;
 
-    Optional& operator=(Optional&& other) requires(!IsMoveConstructible<T> || !IsDestructible<T>) = delete;
+    Optional& operator=(Optional&& other) requires(!IsMoveConstructible<T> || !IsDestructible<T>)
+        = delete;
 
-    ~Optional() requires(!IsDestructible<T>) = delete;
+    ~Optional() requires(!IsDestructible<T>)
+        = delete;
     ~Optional() = default;
 #endif
 
@@ -59,37 +65,39 @@ public:
         : m_has_value(other.m_has_value)
     {
         if (other.has_value())
-            new (&m_storage) T(other.value());
+            new (m_storage.buffer()) T(other.value());
     }
 
     ALWAYS_INLINE Optional(Optional&& other)
         : m_has_value(other.m_has_value)
     {
         if (other.has_value())
-            new (&m_storage) T(other.release_value());
+            new (m_storage.buffer()) T(other.release_value());
     }
 
     template<typename U>
-    requires(IsConstructible<T, U const&> && !IsSpecializationOf<T, Optional> && !IsSpecializationOf<U, Optional>) ALWAYS_INLINE explicit Optional(Optional<U> const& other)
+    requires(IsConstructible<T, U const&> && !IsSpecializationOf<T, Optional> && !IsSpecializationOf<U, Optional>)
+        ALWAYS_INLINE explicit Optional(Optional<U> const& other)
         : m_has_value(other.m_has_value)
     {
         if (other.has_value())
-            new (&m_storage) T(other.value());
+            new (m_storage.buffer()) T(other.value());
     }
 
     template<typename U>
-    requires(IsConstructible<T, U&&> && !IsSpecializationOf<T, Optional> && !IsSpecializationOf<U, Optional>) ALWAYS_INLINE explicit Optional(Optional<U>&& other)
+    requires(IsConstructible<T, U&&> && !IsSpecializationOf<T, Optional> && !IsSpecializationOf<U, Optional>)
+        ALWAYS_INLINE explicit Optional(Optional<U>&& other)
         : m_has_value(other.m_has_value)
     {
         if (other.has_value())
-            new (&m_storage) T(other.release_value());
+            new (m_storage.buffer()) T(other.release_value());
     }
 
     template<typename U = T>
     ALWAYS_INLINE explicit(!IsConvertible<U&&, T>) Optional(U&& value) requires(!IsSame<RemoveCVReference<U>, Optional<T>> && IsConstructible<T, U&&>)
         : m_has_value(true)
     {
-        new (&m_storage) T(forward<U>(value));
+        new (m_storage.buffer()) T(forward<U>(value));
     }
 
     ALWAYS_INLINE Optional& operator=(Optional const& other)
@@ -101,7 +109,7 @@ public:
             clear();
             m_has_value = other.m_has_value;
             if (other.has_value()) {
-                new (&m_storage) T(other.value());
+                new (m_storage.buffer()) T(other.value());
             }
         }
         return *this;
@@ -113,7 +121,7 @@ public:
             clear();
             m_has_value = other.m_has_value;
             if (other.has_value()) {
-                new (&m_storage) T(other.release_value());
+                new (m_storage.buffer()) T(other.release_value());
             }
         }
         return *this;
@@ -152,7 +160,7 @@ public:
     {
         clear();
         m_has_value = true;
-        new (&m_storage) T(forward<Parameters>(parameters)...);
+        new (m_storage.buffer()) T(forward<Parameters>(parameters)...);
     }
 
     [[nodiscard]] ALWAYS_INLINE bool has_value() const { return m_has_value; }
@@ -160,13 +168,13 @@ public:
     [[nodiscard]] ALWAYS_INLINE T& value() &
     {
         VERIFY(m_has_value);
-        return *__builtin_launder(reinterpret_cast<T*>(&m_storage));
+        return *__builtin_launder(m_storage.address());
     }
 
     [[nodiscard]] ALWAYS_INLINE T const& value() const&
     {
         VERIFY(m_has_value);
-        return *__builtin_launder(reinterpret_cast<T const*>(&m_storage));
+        return *__builtin_launder(m_storage.address());
     }
 
     [[nodiscard]] ALWAYS_INLINE T value() &&
@@ -204,7 +212,7 @@ public:
     ALWAYS_INLINE T* operator->() { return &value(); }
 
 private:
-    alignas(T) u8 m_storage[sizeof(T)];
+    ObjectBuffer<T> m_storage;
     bool m_has_value { false };
 };
 
@@ -312,7 +320,8 @@ public:
     }
 
     template<typename U>
-    requires(IsBaseOf<RemoveCVReference<T>, U>) [[nodiscard]] ALWAYS_INLINE AddConstToReferencedType<T> value_or(U& fallback) const
+    requires(IsBaseOf<RemoveCVReference<T>, U>)
+        [[nodiscard]] ALWAYS_INLINE AddConstToReferencedType<T> value_or(U& fallback) const
     {
         if (m_pointer)
             return value();

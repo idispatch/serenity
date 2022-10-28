@@ -9,6 +9,7 @@
  */
 
 #include <AK/Format.h>
+#include <AK/ObjectBuffer.h>
 #include <AK/Types.h>
 
 #include <Kernel/Arch/InterruptManagement.h>
@@ -79,8 +80,8 @@ extern "C" [[noreturn]] void init();
 
 ALWAYS_INLINE static Processor& bootstrap_processor()
 {
-    alignas(Processor) static u8 bootstrap_processor_storage[sizeof(Processor)];
-    return (Processor&)bootstrap_processor_storage;
+    static ObjectBuffer<Processor> bootstrap_processor_storage;
+    return bootstrap_processor_storage.object();
 }
 
 Atomic<Graphics::Console*> g_boot_console;

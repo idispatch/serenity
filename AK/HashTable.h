@@ -10,6 +10,7 @@
 #include <AK/Error.h>
 #include <AK/Forward.h>
 #include <AK/HashFunctions.h>
+#include <AK/ObjectBuffer.h>
 #include <AK/StdLibExtras.h>
 #include <AK/Traits.h>
 #include <AK/Types.h>
@@ -112,19 +113,19 @@ class HashTable {
 
     struct Bucket {
         BucketState state;
-        alignas(T) u8 storage[sizeof(T)];
+        ObjectBuffer<T> storage;
 
-        T* slot() { return reinterpret_cast<T*>(storage); }
-        const T* slot() const { return reinterpret_cast<const T*>(storage); }
+        T* slot() { return storage.address(); }
+        T const* slot() const { return storage.address(); }
     };
 
     struct OrderedBucket {
         OrderedBucket* previous;
         OrderedBucket* next;
         BucketState state;
-        alignas(T) u8 storage[sizeof(T)];
-        T* slot() { return reinterpret_cast<T*>(storage); }
-        const T* slot() const { return reinterpret_cast<const T*>(storage); }
+        ObjectBuffer<T> storage;
+        T* slot() { return storage.address(); }
+        T const* slot() const { return storage.address(); }
     };
 
     using BucketType = Conditional<IsOrdered, OrderedBucket, Bucket>;
@@ -238,7 +239,8 @@ public:
     }
 
     template<Concepts::HashCompatible<T> K>
-    requires(IsSame<TraitsForT, Traits<T>>) [[nodiscard]] bool contains(K const& value) const
+    requires(IsSame<TraitsForT, Traits<T>>)
+        [[nodiscard]] bool contains(K const& value) const
     {
         return find(value) != end();
     }
@@ -265,8 +267,8 @@ public:
     }
 
     using ConstIterator = Conditional<IsOrdered,
-        OrderedHashTableIterator<const HashTable, const T, const BucketType>,
-        HashTableIterator<const HashTable, const T, const BucketType>>;
+        OrderedHashTableIterator<const HashTable, const T, BucketType const>,
+        HashTableIterator<const HashTable, const T, BucketType const>>;
 
     [[nodiscard]] ConstIterator begin() const
     {
@@ -364,30 +366,34 @@ public:
     // FIXME: Support for predicates, while guaranteeing that the predicate call
     //        does not call a non trivial constructor each time invoked
     template<Concepts::HashCompatible<T> K>
-    requires(IsSame<TraitsForT, Traits<T>>) [[nodiscard]] Iterator find(K const& value)
+    requires(IsSame<TraitsForT, Traits<T>>)
+        [[nodiscard]] Iterator find(K const& value)
     {
         return find(Traits<K>::hash(value), [&](auto& other) { return Traits<T>::equals(other, value); });
     }
 
     template<Concepts::HashCompatible<T> K, typename TUnaryPredicate>
-    requires(IsSame<TraitsForT, Traits<T>>) [[nodiscard]] Iterator find(K const& value, TUnaryPredicate predicate)
+    requires(IsSame<TraitsForT, Traits<T>>)
+        [[nodiscard]] Iterator find(K const& value, TUnaryPredicate predicate)
     {
         return find(Traits<K>::hash(value), move(predicate));
     }
 
     template<Concepts::HashCompatible<T> K>
-    requires(IsSame<TraitsForT, Traits<T>>) [[nodiscard]] ConstIterator find(K const& value) const
+    requires(IsSame<TraitsForT, Traits<T>>)
+        [[nodiscard]] ConstIterator find(K const& value) const
     {
         return find(Traits<K>::hash(value), [&](auto& other) { return Traits<T>::equals(other, value); });
     }
 
     template<Concepts::HashCompatible<T> K, typename TUnaryPredicate>
-    requires(IsSame<TraitsForT, Traits<T>>) [[nodiscard]] ConstIterator find(K const& value, TUnaryPredicate predicate) const
+    requires(IsSame<TraitsForT, Traits<T>>)
+        [[nodiscard]] ConstIterator find(K const& value, TUnaryPredicate predicate) const
     {
         return find(Traits<K>::hash(value), move(predicate));
     }
 
-    bool remove(const T& value)
+    bool remove(T const& value)
     {
         auto it = find(value);
         if (it != end()) {

@@ -8,6 +8,7 @@
 #pragma once
 
 #include <AK/Function.h>
+#include <AK/ObjectBuffer.h>
 #include <Kernel/Arch/DeferredCallEntry.h>
 
 namespace Kernel {
@@ -49,7 +50,7 @@ struct ProcessorMessage {
     Atomic<u32> refs;
     union {
         ProcessorMessage* next; // only valid while in the pool
-        alignas(CallbackFunction) u8 callback_storage[sizeof(CallbackFunction)];
+        ObjectBuffer<CallbackFunction> callback_storage;
         struct {
             Memory::PageDirectory const* page_directory;
             u8* ptr;
@@ -63,7 +64,7 @@ struct ProcessorMessage {
 
     CallbackFunction& callback_value()
     {
-        return *bit_cast<CallbackFunction*>(&callback_storage);
+        return callback_storage.object();
     }
 
     void invoke_callback()
