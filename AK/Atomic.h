@@ -6,8 +6,8 @@
 
 #pragma once
 
+#include <AK/AlignedObjectBuffer.h>
 #include <AK/Concepts.h>
-#include <AK/ObjectBuffer.h>
 #include <AK/Platform.h>
 #include <AK/Types.h>
 
@@ -166,8 +166,8 @@ public:
     {
         // We use this hack to prevent unnecessary initialization, even if T has a default constructor.
         // NOTE: Will need to investigate if it pessimizes the generated assembly.
-        ObjectBuffer<T> buffer;
-        T* ret = buffer.address();
+        AlignedObjectBuffer<T> buffer;
+        T* ret = buffer.ptr();
         __atomic_exchange(&m_value, &desired, ret, order);
         return *ret;
     }
@@ -186,8 +186,8 @@ public:
 
     ALWAYS_INLINE T load(MemoryOrder order = DefaultMemoryOrder) const volatile noexcept
     {
-        ObjectBuffer<T> buffer;
-        T* ret = buffer.address();
+        AlignedObjectBuffer<T> buffer;
+        T* ret = buffer.ptr();
         __atomic_load(&m_value, ret, order);
         return *ret;
     }

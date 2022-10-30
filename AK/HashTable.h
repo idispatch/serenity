@@ -6,11 +6,11 @@
 
 #pragma once
 
+#include <AK/AlignedObjectBuffer.h>
 #include <AK/Concepts.h>
 #include <AK/Error.h>
 #include <AK/Forward.h>
 #include <AK/HashFunctions.h>
-#include <AK/ObjectBuffer.h>
 #include <AK/StdLibExtras.h>
 #include <AK/Traits.h>
 #include <AK/Types.h>
@@ -113,19 +113,19 @@ class HashTable {
 
     struct Bucket {
         BucketState state;
-        ObjectBuffer<T> storage;
+        AlignedObjectBuffer<T> storage;
 
-        T* slot() { return storage.address(); }
-        T const* slot() const { return storage.address(); }
+        T* slot() { return storage.ptr(); }
+        T const* slot() const { return storage.ptr(); }
     };
 
     struct OrderedBucket {
         OrderedBucket* previous;
         OrderedBucket* next;
         BucketState state;
-        ObjectBuffer<T> storage;
-        T* slot() { return storage.address(); }
-        T const* slot() const { return storage.address(); }
+        AlignedObjectBuffer<T> storage;
+        T* slot() { return storage.ptr(); }
+        T const* slot() const { return storage.ptr(); }
     };
 
     using BucketType = Conditional<IsOrdered, OrderedBucket, Bucket>;

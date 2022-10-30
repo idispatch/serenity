@@ -11,43 +11,48 @@
 namespace AK {
 
 template<class T>
-class ObjectBuffer {
+class AlignedObjectBuffer {
     alignas(T) u8 m_storage[sizeof(T)];
 
 public:
-    T* address()
+    [[nodiscard]] T* ptr() noexcept
     {
         return reinterpret_cast<T*>(static_cast<void*>(m_storage));
     }
 
-    u8* buffer()
+    [[nodiscard]] u8* buffer() noexcept
     {
         return m_storage;
     }
 
-    T& object()
+    [[nodiscard]] T& object() noexcept
     {
         return *reinterpret_cast<T*>(this);
     }
 
-    T const* address() const
+    [[nodiscard]] T const* ptr() const noexcept
     {
         return reinterpret_cast<T const*>(static_cast<void const*>(m_storage));
     }
 
-    u8 const* buffer() const
+    [[nodiscard]] u8 const* buffer() const noexcept
     {
         return m_storage;
     }
 
-    T const& object() const
+    [[nodiscard]] T const& object() const noexcept
     {
         return *reinterpret_cast<T const*>(this);
+    }
+
+    [[nodiscard]] constexpr size_t byte_size() noexcept
+    {
+        return sizeof(m_storage);
     }
 };
 
 template<class T, size_t Capacity>
-class ObjectArrayBuffer {
+class AlignedObjectArrayBuffer {
     static constexpr size_t storage_size()
     {
         if constexpr (Capacity == 0)
@@ -67,42 +72,53 @@ class ObjectArrayBuffer {
     alignas(storage_alignment()) u8 m_storage[storage_size()];
 
 public:
-    T* address(size_t index)
+    [[nodiscard]] T* ptr(size_t index) noexcept
     {
         static_assert(Capacity > 0, "Invalid capacity");
         return reinterpret_cast<T*>(static_cast<void*>(m_storage)) + index;
     }
 
-    u8* buffer()
+    [[nodiscard]] T* item_ptr(size_t index) noexcept
+    {
+        static_assert(Capacity > 0, "Invalid capacity");
+        return reinterpret_cast<T*>(static_cast<void*>(m_storage)) + index;
+    }
+
+    [[nodiscard]] u8* buffer() noexcept
     {
         static_assert(Capacity > 0, "Invalid capacity");
         return m_storage;
     }
 
-    T& object(size_t index)
+    [[nodiscard]] T& item(size_t index) noexcept
     {
-        return *address(index);
+        return *item_ptr(index);
     }
 
-    T const* address(size_t index) const
+    [[nodiscard]] T const* item_ptr(size_t index) const noexcept
     {
         static_assert(Capacity > 0, "Invalid capacity");
         return reinterpret_cast<T const*>(static_cast<void const*>(m_storage)) + index;
     }
 
-    u8 const* buffer() const
+    [[nodiscard]] u8 const* buffer() const noexcept
     {
         static_assert(Capacity > 0, "Invalid capacity");
         return m_storage;
     }
 
-    T const& object(size_t index) const
+    [[nodiscard]] T const& object(size_t index) const noexcept
     {
-        return *address(index);
+        return *item_ptr(index);
+    }
+
+    [[nodiscard]] constexpr size_t byte_size() noexcept
+    {
+        return sizeof(m_storage);
     }
 };
 
 }
 
-using AK::ObjectArrayBuffer;
-using AK::ObjectBuffer;
+using AK::AlignedObjectArrayBuffer;
+using AK::AlignedObjectBuffer;

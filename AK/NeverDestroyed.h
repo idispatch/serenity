@@ -6,8 +6,8 @@
 
 #pragma once
 
+#include <AK/AlignedObjectBuffer.h>
 #include <AK/Noncopyable.h>
-#include <AK/ObjectBuffer.h>
 #include <AK/Types.h>
 
 namespace AK {
@@ -36,7 +36,7 @@ public:
     T const& get() const { return storage.object(); }
 
 private:
-    ObjectBuffer<T> storage;
+    AlignedObjectBuffer<T> storage;
 };
 
 }

@@ -102,7 +102,7 @@ ALWAYS_INLINE static Processor& bsp_processor()
 {
     // This solves a problem where the bsp Processor instance
     // gets "re"-initialized in init() when we run all global constructors.
-    static ObjectBuffer<Processor> bootstrap_processor_storage;
+    static AlignedObjectBuffer<Processor> bootstrap_processor_storage;
     return bootstrap_processor_storage.object();
 }
 

@@ -6,9 +6,9 @@
 
 #pragma once
 
+#include <AK/AlignedObjectBuffer.h>
 #include <AK/BitCast.h>
 #include <AK/Function.h>
-#include <AK/ObjectBuffer.h>
 
 namespace Kernel {
 
@@ -16,7 +16,7 @@ struct DeferredCallEntry {
     using HandlerFunction = Function<void()>;
 
     DeferredCallEntry* next;
-    ObjectBuffer<HandlerFunction> handler_storage;
+    AlignedObjectBuffer<HandlerFunction> handler_storage;
     bool was_allocated;
 
     HandlerFunction& handler_value()

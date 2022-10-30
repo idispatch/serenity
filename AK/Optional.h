@@ -7,8 +7,8 @@
 
 #pragma once
 
+#include <AK/AlignedObjectBuffer.h>
 #include <AK/Assertions.h>
-#include <AK/ObjectBuffer.h>
 #include <AK/StdLibExtras.h>
 #include <AK/Types.h>
 #include <AK/kmalloc.h>
@@ -168,13 +168,13 @@ public:
     [[nodiscard]] ALWAYS_INLINE T& value() &
     {
         VERIFY(m_has_value);
-        return *__builtin_launder(m_storage.address());
+        return *__builtin_launder(m_storage.ptr());
     }
 
     [[nodiscard]] ALWAYS_INLINE T const& value() const&
     {
         VERIFY(m_has_value);
-        return *__builtin_launder(m_storage.address());
+        return *__builtin_launder(m_storage.ptr());
     }
 
     [[nodiscard]] ALWAYS_INLINE T value() &&
@@ -212,7 +212,7 @@ public:
     ALWAYS_INLINE T* operator->() { return &value(); }
 
 private:
-    ObjectBuffer<T> m_storage;
+    AlignedObjectBuffer<T> m_storage;
     bool m_has_value { false };
 };
 

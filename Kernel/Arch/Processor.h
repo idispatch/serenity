@@ -7,8 +7,8 @@
 
 #pragma once
 
+#include <AK/AlignedObjectBuffer.h>
 #include <AK/Function.h>
-#include <AK/ObjectBuffer.h>
 #include <Kernel/Arch/DeferredCallEntry.h>
 
 namespace Kernel {
@@ -50,7 +50,7 @@ struct ProcessorMessage {
     Atomic<u32> refs;
     union {
         ProcessorMessage* next; // only valid while in the pool
-        ObjectBuffer<CallbackFunction> callback_storage;
+        AlignedObjectBuffer<CallbackFunction> callback_storage;
         struct {
             Memory::PageDirectory const* page_directory;
             u8* ptr;

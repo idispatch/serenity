@@ -7,12 +7,12 @@
 
 #pragma once
 
+#include <AK/AlignedObjectBuffer.h>
 #include <AK/Assertions.h>
 #include <AK/Error.h>
 #include <AK/Find.h>
 #include <AK/Forward.h>
 #include <AK/Iterator.h>
-#include <AK/ObjectBuffer.h>
 #include <AK/Optional.h>
 #include <AK/ReverseIterator.h>
 #include <AK/Span.h>
@@ -792,12 +792,12 @@ private:
     StorageType* inline_buffer()
     {
         static_assert(inline_capacity > 0);
-        return m_inline_buffer_storage.address(0);
+        return m_inline_buffer_storage.item_ptr(0);
     }
     StorageType const* inline_buffer() const
     {
         static_assert(inline_capacity > 0);
-        return m_inline_buffer_storage.address(0);
+        return m_inline_buffer_storage.item_ptr(0);
     }
 
     StorageType& raw_last() { return raw_at(size() - 1); }
@@ -807,7 +807,7 @@ private:
     size_t m_size { 0 };
     size_t m_capacity { 0 };
 
-    ObjectArrayBuffer<StorageType, inline_capacity> m_inline_buffer_storage;
+    AlignedObjectArrayBuffer<StorageType, inline_capacity> m_inline_buffer_storage;
     StorageType* m_outline_buffer { nullptr };
 };
 

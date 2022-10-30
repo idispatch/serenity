@@ -6,9 +6,9 @@
 
 #pragma once
 
+#include <AK/AlignedObjectBuffer.h>
 #include <AK/Assertions.h>
 #include <AK/Forward.h>
-#include <AK/ObjectBuffer.h>
 #include <AK/StdLibExtras.h>
 
 namespace AK {
@@ -123,11 +123,11 @@ public:
     size_t head_index() const { return m_head; }
 
 protected:
-    T* elements() { return m_storage.address(0); }
-    T const* elements() const { return m_storage.address(0); }
+    T* elements() { return m_storage.item_ptr(0); }
+    T const* elements() const { return m_storage.item_ptr(0); }
 
     friend class ConstIterator;
-    ObjectArrayBuffer<T, Capacity> m_storage;
+    AlignedObjectArrayBuffer<T, Capacity> m_storage;
     size_t m_size { 0 };
     size_t m_head { 0 };
 };
